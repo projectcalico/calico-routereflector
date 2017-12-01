@@ -19,5 +19,4 @@ chmod 640 /etc/container_environment.sh /etc/container_environment.json
 ln -s /etc/container_environment.sh /etc/profile.d/
 
 ## Install runit.
-$minimal_apt_get_install runit
-
+apk add --no-cache runit
