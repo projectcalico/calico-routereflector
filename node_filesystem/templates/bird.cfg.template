@@ -20,6 +20,51 @@ template bgp bgp_template {
 
 {{$our_rr_key := printf "/rr_v4/%s" (getenv "IP")}}
 {{if ls $our_rr_key}}{{$our_rr_data := json (getv $our_rr_key)}}
+# ------------- RR-to-Border OSPF -------------
+{{if ls "/ospf_to_hosts"}}
+
+# import direct interfaces
+protocol direct {
+  interface -"cali*", -"docker*", "*";
+}
+
+# Synchronize them with the kernel
+protocol kernel kern1 {
+  export all;
+}
+
+# OSPF Export filters
+filter export_OSPF {
+  accept;
+}
+
+filter import_OSPF {
+  reject;
+}
+
+protocol ospf pods_ospf {
+  debug off;
+  export filter export_OSPF;
+  import filter import_OSPF;
+  area 0.0.0.0 {
+    interface "eth*" {
+      hello 10;
+      retransmit 5;
+      cost 10;
+      transmit delay 1;
+      dead count 4;
+      wait 40;
+      type ptp;
+      authentication none;
+      priority 0;
+      neighbors {
+        {{range gets "/ospf_to_hosts/*"}}{{$ohost := json .Value}}{{$ohost.ip}}{{if $ohost.eligible}} eligible{{end}};{{ end }}
+      };
+    };
+  };
+}
+
+{{ end }}
 # ------------- RR-to-RR full mesh -------------
 {{if ls "/rr_v4"}}
 {{range gets "/rr_v4/*"}}{{$data := json .Value}}{{$rr_ip := $data.ip}}
