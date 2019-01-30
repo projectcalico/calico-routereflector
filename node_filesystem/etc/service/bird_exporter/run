@@ -1,0 +1,5 @@
+#!/bin/sh
+exec 2>&1
+exec bird_exporter -format.new=true \
+                   -bird.socket=/etc/service/bird/bird.ctl \
+                   -bird.socket6=/etc/service/bird6/bird6.ctl

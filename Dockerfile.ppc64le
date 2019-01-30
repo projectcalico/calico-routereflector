@@ -15,6 +15,13 @@
 
 # For details and docs - see https://github.com/phusion/baseimage-docker#getting_started
 
+# bird exporter build
+FROM golang AS builder
+RUN go get -d -v github.com/czerwonk/bird_exporter
+WORKDIR /go/src/github.com/czerwonk/bird_exporter
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=ppc64le \ 
+    go build -a -installsuffix cgo -o /bird_exporter .
+
 FROM ppc64le/ubuntu:16.04
 
 RUN apt-get update && \
@@ -50,3 +57,6 @@ ADD /dist/confd-ppc64le /confd
 # Copy in our custom configuration files etc. We do this last to speed up
 # builds for developer, as it's thing they're most likely to change.
 COPY node_filesystem /
+
+# Copy the bird_exporter
+COPY --from=builder /bird_exporter /bin/bird_exporter
